@@ -15,7 +15,6 @@ const AlumniLayout = () => {
         <Navbar toggleSidebar={() => setIsOpen(!isOpen)} />
       </div>
 
-      {/* Overlay (Mobile only) */}
       {isOpen && (
         <div
           className="fixed inset-100 bg-transparent bg-opacity-100 z-40 md:hidden"
@@ -23,7 +22,6 @@ const AlumniLayout = () => {
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`
             fixed top-16 left-0 h-full bg-white shadow-md z-50
@@ -33,13 +31,10 @@ const AlumniLayout = () => {
             md:translate-x-0
           `}
       >
-        <SideBar user={user} />
+        <SideBar user={user} onClose={() => setIsOpen(false)} />
 
       </div>
       <div className="flex pt-16">
-
-
-        {/* Main Content */}
         <div
           className={`
             flex-1 md:p-4 p-2 transition-all duration-300

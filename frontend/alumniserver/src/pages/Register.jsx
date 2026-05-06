@@ -47,7 +47,7 @@ const Register = () => {
       setPasswordError('');
     }
   };
-
+  console.log("bvjabkjbkjbjbjkasbkjbkjsb")
   const startResendTimer = () => {
     setResendTimer(30);
     const interval = setInterval(() => {

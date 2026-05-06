@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const SideBar = ({ user }) => {
+const SideBar = ({ user, onClose }) => {
+
   const [isOpen, setIsOpen] = useState(true);
 
   const navigate = useNavigate();
@@ -15,10 +16,8 @@ const SideBar = ({ user }) => {
   const currentPath = location.pathname;
   const user_role = user?.role || "guest";
 
-  // ✅ Active check (handles nested routes also)
   const isActive = (path) => currentPath.endsWith(path);
 
-  // ✅ Role-based navigation
   const navConfig = {
     guest: [
       { icon: LogIn, label: "Login", href: "/login" },
@@ -41,7 +40,7 @@ const SideBar = ({ user }) => {
       { icon: Calendar, label: 'Events & Reunions', href: '/alumnidashboard/events' },
       { icon: Award, label: 'Alumni Spotlights', href: '/alumnidashboard/spotlights' },
       { icon: Heart, label: 'Giving Back', href: '/alumnidashboard/contribute' },
-      { icon: Settings, label: 'Settings', href: '/settings' },
+      { icon: Settings, label: 'Settings', href: '/alumnidashboard/settings' },
       { icon: Bell, label: 'Notifications', href: '/notifications' },
     ],
     student: [
@@ -88,7 +87,10 @@ const SideBar = ({ user }) => {
             return (
               <li key={index}>
                 <button
-                  onClick={() => navigate(item.href)}
+                  onClick={() => {
+                    navigate(item.href);
+                    if (onClose) onClose();
+                  }}
                   className={`
                     flex items-center gap-3 px-3 py-2 rounded-lg w-full transition-all
                     ${active
@@ -125,7 +127,11 @@ const SideBar = ({ user }) => {
             <span className={`${!isOpen && 'md:hidden'}`}>Schedule Mentoring</span>
           </button>
 
-          <button className="w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
+          <button
+            onClick={() => {
+              navigate('/');
+              if (onClose) onClose(); // ✅ close sidebar
+            }} className="w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
             <LogOut size={18} />
             <span className={`${!isOpen && 'md:hidden'}`}>Logout</span>
           </button>

@@ -1,7 +1,34 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast, Bounce } from "react-toastify";
 const Loginpage = () => {
+  const [name, setName] = useState("")
+  const [password, setPassword] = useState("")
+  console.log("hejknk")
   const navigate = useNavigate();
+  const handlelogin = () => {
+    const loginPromise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (name && password) {
+          resolve("Success");
+        } else {
+          reject("Missing fields");
+        }
+      }, 1000);
+    });
+
+    toast.promise(loginPromise, {
+      pending: "Logging in...",
+      success: "Login successful",
+      error: "Please enter credentials ",
+    });
+
+    loginPromise
+      .then(() => {
+        navigate("/alumnidashboard");
+      })
+      .catch(() => { });
+  };
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
@@ -13,12 +40,17 @@ const Loginpage = () => {
         <div className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Username or Email</label>
-            <input className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-900 outline-none transition" placeholder="Enter your credentials" />
+            <input className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-900 outline-none transition" placeholder="Enter your credentials"
+              value={name}
+              onChange={(e) => { setName(e.target.value) }} />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Password</label>
-            <input type="password" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-900 outline-none transition" placeholder="••••••••" />
+            <input
+              value={password}
+              onChange={(e) => { setPassword(e.target.value) }}
+              type="password" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-900 outline-none transition" placeholder="••••••••" />
           </div>
 
           <div className="flex justify-between items-center text-sm">
@@ -28,7 +60,7 @@ const Loginpage = () => {
             <a href="#" className="text-blue-800 font-bold">Forgot?</a>
           </div>
 
-          <button onClick={() => { navigate("/alumnidashboard") }} className="w-full bg-blue-900 text-white font-bold py-4 rounded-2xl shadow-blue-200 shadow-lg hover:bg-blue-800 transition transform hover:scale-[1.02]">
+          <button onClick={handlelogin} className="w-full bg-blue-900 text-white font-bold py-4 rounded-2xl shadow-blue-200 shadow-lg hover:bg-blue-800 transition transform hover:scale-[1.02]">
             Sign In
           </button>
 
@@ -42,8 +74,22 @@ const Loginpage = () => {
             Create Alumni Account
           </button>
         </div>
-      </div>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick={false}
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          transition={Bounce}
+        />  </div>
     </div>
+
   );
 };
 
