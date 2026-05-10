@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Navbar from '../components/Navbar'
 import { Outlet } from 'react-router-dom'
 import SideBar from '../components/SideBar'
-
+import Snowfall from 'react-snowfall'
 const AlumniLayout = () => {
   const [isOpen, setIsOpen] = useState(false)
   const user = {
@@ -11,6 +11,7 @@ const AlumniLayout = () => {
 
   return (
     <div className='min-h-screen'>
+      <Snowfall snowflakeCount={100} color='red' />
       <div className="fixed top-0 left-0 w-full z-50">
         <Navbar toggleSidebar={() => setIsOpen(!isOpen)} />
       </div>

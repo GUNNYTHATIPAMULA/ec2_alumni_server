@@ -12,11 +12,13 @@ import MentorshipHub from "./pages/alumni/MentorshipHub";
 import Events_alumni from "./pages/alumni/Events_alumni";
 import Settings from "./pages/alumni/Settings";
 import Alumni_connection from "./pages/alumni/Alumni_connection";
+import Snowfall from "react-snowfall";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         <Route path="/alumnidashboard" element={<AlumniLayout />}  >
           <Route index element={<Alumni_Dashboard />} />
           <Route path="alumnidirectory" element={<All_Alumni />} />

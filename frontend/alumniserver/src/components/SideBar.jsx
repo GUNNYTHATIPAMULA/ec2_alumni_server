@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Home, Users, Calendar, Briefcase, User, LogOut,
   Award, GraduationCap, Heart, Settings, FileText,
-  Bell, LogIn, SignatureIcon
+  Bell, LogIn, UserRoundPlus
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -21,7 +21,7 @@ const SideBar = ({ user, onClose }) => {
   const navConfig = {
     guest: [
       { icon: LogIn, label: "Login", href: "/login" },
-      { icon: SignatureIcon, label: "Register", href: "/register" }
+      { icon: UserRoundPlus, label: "Register", href: "/register" }
     ],
     admin: [
       { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
