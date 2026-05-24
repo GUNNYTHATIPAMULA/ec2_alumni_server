@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight,RotateCcw } from 'lucide-react';
+import { ChevronRight, RotateCcw } from 'lucide-react';
 
-const FutureCalendar = () => {
+const FutureCalendar = ({ events = [], onEventClick }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [dayEvents, setDayEvents] = useState([]);
+
+  const eventDates = events.reduce((acc, event) => {
+    const dateKey = new Date(event.event_date).toDateString();
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(event);
+    return acc;
+  }, {});
 
   useEffect(() => {
     generateCalendar();
@@ -15,66 +23,61 @@ const FutureCalendar = () => {
     const month = currentDate.getMonth();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    // First day of the month
+
     const firstDay = new Date(year, month, 1);
-    // Last day of the month
     const lastDay = new Date(year, month + 1, 0);
-    
-    // Get day of week for first day (0 = Sunday, 6 = Saturday)
     const startDayOfWeek = firstDay.getDay();
-    
+
     const days = [];
-    
-    // Add empty cells for days before the 1st of the month
+
     for (let i = 0; i < startDayOfWeek; i++) {
-      days.push({
-        date: null,
-        isCurrentMonth: false,
-        isEmpty: true
-      });
+      days.push({ date: null, isCurrentMonth: false, isEmpty: true });
     }
-    
-    // Add current month days
+
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const currentDateObj = new Date(year, month, i);
-      const isPast = currentDateObj < today && 
-                     (currentDateObj.getMonth() < today.getMonth() || 
-                      currentDateObj.getFullYear() < today.getFullYear());
-      
+      const isPast = currentDateObj < today;
+      const dateKey = currentDateObj.toDateString();
+      const hasEvent = !!eventDates[dateKey];
+
       days.push({
         date: currentDateObj,
         day: i,
         isCurrentMonth: true,
         isPast: isPast,
         isEmpty: false,
-        isToday: currentDateObj.toDateString() === today.toDateString()
+        isToday: currentDateObj.toDateString() === today.toDateString(),
+        hasEvent,
+        eventCount: eventDates[dateKey]?.length || 0,
       });
     }
-    
+
     setCalendarDays(days);
   };
 
   const changeMonth = (increment) => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1);
     const today = new Date();
-    
-    // Prevent going to previous months
-    if (newDate.getFullYear() < today.getFullYear() || 
+    if (newDate.getFullYear() < today.getFullYear() ||
         (newDate.getFullYear() === today.getFullYear() && newDate.getMonth() < today.getMonth())) {
       return;
     }
-    
     setCurrentDate(newDate);
+    setSelectedDate(null);
+    setDayEvents([]);
   };
 
   const goToToday = () => {
     setCurrentDate(new Date());
+    setSelectedDate(null);
+    setDayEvents([]);
   };
 
   const handleDateClick = (day) => {
     if (!day.isPast && !day.isEmpty) {
       setSelectedDate(day.date);
+      const dateKey = day.date.toDateString();
+      setDayEvents(eventDates[dateKey] || []);
     }
   };
 
@@ -82,92 +85,89 @@ const FutureCalendar = () => {
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 
-  const isCurrentMonth = (date) => {
+  const isCurrentMonthNow = () => {
     const today = new Date();
-    return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+    return currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="bg-blue-900 px-6 py-4">
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-blue-900 px-4 py-3">
         <div className="flex justify-between items-center">
           <div className="text-white">
-            <h2 className="text-2xl font-bold">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </h2>
-            {isCurrentMonth(currentDate) && (
-              <p className="text-blue-100 text-sm mt-1">Current Month</p>
-            )}
+            <h2 className="text-lg font-bold">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
+            {isCurrentMonthNow() && <p className="text-blue-100 text-xs mt-0.5">Current Month</p>}
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={goToToday}
-              className="px-4 py-2 bg-white text-blue-600 rounded-sm hover:bg-blue-50 transition-colors font-medium text-sm"
-            >
-              <RotateCcw />
+          <div className="flex gap-1">
+            <button onClick={goToToday}
+              className="p-1.5 bg-white text-blue-600 rounded hover:bg-blue-50 transition-colors">
+              <RotateCcw size={14} />
             </button>
-            <button
-              onClick={() => changeMonth(1)}
-              className="px-4 py-2 bg-white text-blue-600 rounded-sm hover:bg-blue-50 transition-colors font-medium"
-            >
-             <ChevronRight />
+            <button onClick={() => changeMonth(1)}
+              className="p-1.5 bg-white text-blue-600 rounded hover:bg-blue-50 transition-colors">
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-px bg-gray-200">
         {weekdays.map(day => (
-          <div key={day} className="bg-gray-50 py-3 text-center text-sm font-semibold text-gray-600">
-            {day}
-          </div>
+          <div key={day} className="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-600">{day}</div>
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-px bg-gray-200">
         {calendarDays.map((day, index) => {
           if (day.isEmpty) {
-            return (
-              <div key={index} className="bg-white p-1 min-h-[20px]"></div>
-            );
+            return <div key={index} className="bg-white p-1 min-h-[52px]"></div>;
           }
 
-          const isSelected = selectedDate && day.date && 
-            selectedDate.toDateString() === day.date.toDateString();
+          const isSelected = selectedDate && day.date && selectedDate.toDateString() === day.date.toDateString();
 
           return (
-            <div
-              key={index}
+            <div key={index}
               onClick={() => handleDateClick(day)}
-              className={`
-                bg-white p-1 min-h-[0px] relative transition-all duration-200
-                ${!day.isPast && !day.isEmpty ? 'hover:bg-blue-50 cursor-pointer' : 'cursor-not-allowed'}
-                ${isSelected ? 'ring-2 ring-blue-500 ring-inset' : ''}
-              `}
+              className={`bg-white p-1 min-h-[52px] relative transition-all duration-200 ${
+                !day.isPast && !day.isEmpty ? 'hover:bg-blue-50 cursor-pointer' : 'cursor-not-allowed'
+              } ${isSelected ? 'ring-2 ring-blue-500 ring-inset' : ''}`}
             >
-              <div className="flex justify-between items-start">
-                <span className={`
-                  inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium
-                  ${day.isToday ? 'bg-blue-900 text-white' : 'text-gray-700'}
-                  ${day.isPast ? 'text-gray-400' : ''}
-                `}>
-                  {day.day}
-                </span>
-              </div>
-              
-             
-              {day.isPast && (
-                <div className="absolute inset-0 bg-gray-50 bg-opacity-50"></div>
+              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
+                day.isToday ? 'bg-blue-900 text-white' : day.isPast ? 'text-gray-400' : 'text-gray-700'
+              }`}>
+                {day.day}
+              </span>
+              {day.hasEvent && (
+                <div className="flex justify-center gap-0.5 mt-0.5">
+                  {Array.from({ length: Math.min(day.eventCount, 3) }).map((_, i) => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  ))}
+                </div>
               )}
+              {day.isPast && <div className="absolute inset-0 bg-gray-50 bg-opacity-50"></div>}
             </div>
           );
         })}
       </div>
 
-     
+      {selectedDate && dayEvents.length > 0 && (
+        <div className="border-t border-gray-100 p-3 space-y-2">
+          <p className="text-xs font-semibold text-gray-700">
+            Events on {selectedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
+          {dayEvents.map((event, i) => (
+            <div key={event.id || i}
+              onClick={() => onEventClick?.(event)}
+              className="flex items-center gap-2 p-2 bg-green-50 rounded-lg hover:bg-green-100 cursor-pointer transition">
+              <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-gray-900 truncate">{event.title}</p>
+                <p className="text-xs text-gray-500 truncate">{event.location || 'No location'}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

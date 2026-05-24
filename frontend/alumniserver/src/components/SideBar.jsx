@@ -5,6 +5,7 @@ import {
   Bell, LogIn, UserRoundPlus
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SideBar = ({ user, onClose }) => {
 
@@ -12,6 +13,7 @@ const SideBar = ({ user, onClose }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const currentPath = location.pathname;
   const user_role = user?.role || "guest";
@@ -24,11 +26,10 @@ const SideBar = ({ user, onClose }) => {
       { icon: UserRoundPlus, label: "Register", href: "/register" }
     ],
     admin: [
-      { icon: Home, label: 'Dashboard', href: '/admin/dashboard' },
-      { icon: Users, label: 'All Alumni', href: '/admin/alumni' },
-      { icon: Calendar, label: 'Events', href: '/admin/events' },
-      { icon: Briefcase, label: 'Job Openings', href: '/admin/jobs' },
-      { icon: User, label: 'Profile', href: '/admin/profile' },
+      { icon: Home, label: 'Dashboard', href: '/admindashboard' },
+      { icon: Users, label: 'All Alumni', href: '/admindashboard/alumni' },
+      { icon: Calendar, label: 'Events', href: '/admindashboard/events' },
+      { icon: User, label: 'Pending Approvals', href: '/admindashboard/pending' },
     ],
     alumni: [
       { icon: Home, label: 'Dashboard', href: '/alumnidashboard' },
@@ -41,14 +42,12 @@ const SideBar = ({ user, onClose }) => {
       { icon: Award, label: 'Alumni Spotlights', href: '/alumnidashboard/spotlights' },
       { icon: Heart, label: 'Giving Back', href: '/alumnidashboard/contribute' },
       { icon: Settings, label: 'Settings', href: '/alumnidashboard/settings' },
-      { icon: Bell, label: 'Notifications', href: '/notifications' },
+      { icon: Bell, label: 'Notifications', href: '/alumnidashboard/notifications' },
     ],
     student: [
-      { icon: Home, label: 'Dashboard', href: '/student/dashboard' },
-      { icon: Users, label: 'All Alumni', href: '/student/alumni' },
-      { icon: Calendar, label: 'Events', href: '/student/events' },
-      { icon: Briefcase, label: 'Job Openings', href: '/student/jobs' },
-      { icon: User, label: 'Profile', href: '/student/profile' },
+      { icon: Home, label: 'Dashboard', href: '/studentdashboard' },
+      { icon: Calendar, label: 'Events', href: '/studentdashboard/events' },
+      { icon: User, label: 'Profile', href: '/studentdashboard/profile' },
     ]
   };
 
@@ -129,8 +128,9 @@ const SideBar = ({ user, onClose }) => {
 
           <button
             onClick={() => {
+              logout();
               navigate('/');
-              if (onClose) onClose(); // ✅ close sidebar
+              if (onClose) onClose();
             }} className="w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
             <LogOut size={18} />
             <span className={`${!isOpen && 'md:hidden'}`}>Logout</span>

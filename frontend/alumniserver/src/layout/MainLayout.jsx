@@ -12,7 +12,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen">
-      <Snowfall snowflakeCount={100} color='black' />
+      {/* <Snowfall snowflakeCount={100} color='black' /> */}
       {/* Navbar */}
       <div className="fixed top-0 left-0 w-full z-50">
         <Navbar toggleSidebar={() => setIsOpen(!isOpen)} />
@@ -21,7 +21,7 @@ const MainLayout = () => {
       {/* Overlay (Mobile only) */}
       {isOpen && (
         <div
-          className="fixed inset-100 bg-transparent bg-opacity-100 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -40,12 +40,7 @@ const MainLayout = () => {
 
         </div>
 
-        {/* Main Content */}
-        <div
-          className={`
-            flex-1 md:p-4 p-2 transition-all duration-300
-          `}
-        >
+        <div className="flex-1 md:p-4 p-2 transition-all duration-300">
           <Outlet />
         </div>
 
