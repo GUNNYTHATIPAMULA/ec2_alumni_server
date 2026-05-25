@@ -14,6 +14,7 @@ from app.api.routes.job_routes import router as job_routes
 from app.api.routes.event_image_routes import router as event_image_routes
 from app.api.routes.notification_routes import router as notification_router
 from app.api.routes.skill_routes import router as skill_routes
+from app.api.routes.experience_routes import router as experience_routes
 
 router = APIRouter()
 
@@ -31,3 +32,4 @@ router.include_router(contribution_router)
 router.include_router(job_routes)
 router.include_router(event_image_routes)
 router.include_router(notification_router)
+router.include_router(experience_routes)

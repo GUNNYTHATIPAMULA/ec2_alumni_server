@@ -63,7 +63,7 @@ async def get_alumni_directory(db: AsyncSession = Depends(get_db)):
     profiles = result.scalars().all()
     return [
         AlumniListResponse(
-            id=str(p.id), full_name=p.full_name, roll_number=p.roll_number,
+            id=str(p.id), user_id=str(p.user_id), full_name=p.full_name, roll_number=p.roll_number,
             branch=p.branch, batch_start_year=p.batch_start_year, batch_end_year=p.batch_end_year,
             occupation=p.occupation, company_name=p.company_name, profile_image=p.profile_image
         )
@@ -78,7 +78,7 @@ async def get_alumni_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
     if not profile:
         raise HTTPException(status_code=404, detail="Alumni not found")
     return AlumniListResponse(
-        id=str(profile.id), full_name=profile.full_name, roll_number=profile.roll_number,
+        id=str(profile.id), user_id=str(profile.user_id), full_name=profile.full_name, roll_number=profile.roll_number,
         branch=profile.branch, batch_start_year=profile.batch_start_year, batch_end_year=profile.batch_end_year,
         occupation=profile.occupation, company_name=profile.company_name, profile_image=profile.profile_image
     )

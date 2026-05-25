@@ -34,6 +34,7 @@ class AlumniProfileUpdate(BaseModel):
 
 class AlumniListResponse(BaseModel):
     id: str
+    user_id: str
     full_name: str
     roll_number: str
     branch: str
