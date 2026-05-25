@@ -10,17 +10,21 @@ const Alumni_Profile = () => {
   const [form, setForm] = useState({})
   const [skills, setSkills] = useState([])
   const [education, setEducation] = useState([])
+  const [experiences, setExperiences] = useState([])
   const [newSkill, setNewSkill] = useState("")
   const [newEdu, setNewEdu] = useState({ degree: "", institution: "", field_of_study: "", start_year: "", end_year: "" })
+  const [newExp, setNewExp] = useState({ company_name: "", role: "", start_year: "", end_year: "", description: "" })
   const [showEduForm, setShowEduForm] = useState(false)
+  const [showExpForm, setShowExpForm] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
   const loadData = async () => {
     try {
-      const [profileRes, skillsRes, eduRes] = await Promise.all([
+      const [profileRes, skillsRes, eduRes, expRes] = await Promise.all([
         api.get('/alumni/profile'),
         api.get('/alumni/skills').catch(() => ({ data: [] })),
         api.get('/alumni/education').catch(() => ({ data: [] })),
+        api.get('/alumni/experience').catch(() => ({ data: [] })),
       ])
       setProfile(profileRes.data)
       setForm({
@@ -35,6 +39,7 @@ const Alumni_Profile = () => {
       })
       setSkills(skillsRes.data || [])
       setEducation(eduRes.data || [])
+      setExperiences(expRes.data || [])
     } catch (err) {
       console.error('Error loading data:', err)
     } finally {
@@ -114,6 +119,37 @@ const Alumni_Profile = () => {
     }
   }
 
+  const addExperience = async () => {
+    if (!newExp.company_name || !newExp.role || !newExp.start_year) return
+    setActionLoading(true)
+    try {
+      const res = await api.post('/alumni/add-experience', {
+        ...newExp,
+        start_year: parseInt(newExp.start_year),
+        end_year: newExp.end_year ? parseInt(newExp.end_year) : null,
+      })
+      setExperiences(prev => [...prev, res.data])
+      setNewExp({ company_name: "", role: "", start_year: "", end_year: "", description: "" })
+      setShowExpForm(false)
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to add experience')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const deleteExperience = async (id) => {
+    setActionLoading(id)
+    try {
+      await api.delete(`/alumni/experience/${id}`)
+      setExperiences(prev => prev.filter(e => e.id !== id))
+    } catch (err) {
+      alert('Failed to delete experience')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -134,6 +170,7 @@ const Alumni_Profile = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto md:px-4 px-1 space-y-6">
+        {/* Profile Header */}
         <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-start md:items-center gap-3 md:gap-4">
@@ -169,7 +206,17 @@ const Alumni_Profile = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
+          {/* Personal Information */}
           <Card title="Personal Information" icon={Users}>
+            {editing && (
+              <div className="mb-4">
+                <button onClick={handleSave} disabled={saving}
+                  className="w-full flex items-center justify-center gap-2 bg-amber-500 text-gray-900 font-semibold py-3 rounded-xl hover:bg-amber-600 transition disabled:opacity-50">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={16} />}
+                  Save Changes
+                </button>
+              </div>
+            )}
             {editing ? (
               <div className="space-y-3">
                 <EditField label="Full Name" value={form.full_name} onChange={v => setForm(p => ({ ...p, full_name: v }))} />
@@ -180,11 +227,6 @@ const Alumni_Profile = () => {
                 <EditField label="LinkedIn" value={form.linkedin_url} onChange={v => setForm(p => ({ ...p, linkedin_url: v }))} />
                 <EditField label="GitHub" value={form.github_url} onChange={v => setForm(p => ({ ...p, github_url: v }))} />
                 <EditField label="Profile Image URL" value={form.profile_image} onChange={v => { setForm(p => ({ ...p, profile_image: v })); setProfile(prev => ({ ...prev, profile_image: v })) }} />
-                <button onClick={handleSave} disabled={saving}
-                  className="w-full flex items-center justify-center gap-2 bg-amber-500 text-gray-900 font-semibold py-3 rounded-xl hover:bg-amber-600 transition disabled:opacity-50 mt-2">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={16} />}
-                  Save Changes
-                </button>
               </div>
             ) : (
               <>
@@ -200,14 +242,59 @@ const Alumni_Profile = () => {
             )}
           </Card>
 
+          {/* Work Experience */}
           <Card title="Work Experience" icon={Briefcase}>
-            {profile.occupation ? (
-              <Timeline role={profile.occupation} company={profile.company_name || 'Unknown'} date="Current" />
-            ) : (
-              <p className="text-sm text-gray-400">No work experience added</p>
-            )}
+            <div className="space-y-3">
+              {experiences.map(exp => (
+                <div key={exp.id} className="flex items-start justify-between group">
+                  <div className="border-l-2 border-amber-300 pl-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900">{exp.role}</p>
+                    <p className="text-xs text-gray-500">{exp.company_name}</p>
+                    <p className="text-xs text-amber-600">{exp.start_year}{exp.end_year ? ` - ${exp.end_year}` : ' - Present'}</p>
+                    {exp.description && <p className="text-xs text-gray-400 mt-1">{exp.description}</p>}
+                  </div>
+                  <button onClick={() => deleteExperience(exp.id)}
+                    className="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                    {actionLoading === exp.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 size={14} />}
+                  </button>
+                </div>
+              ))}
+              {experiences.length === 0 && (
+                <p className="text-sm text-gray-400">No work experience added</p>
+              )}
+              {!showExpForm ? (
+                <button onClick={() => setShowExpForm(true)}
+                  className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 mt-2">
+                  <Plus size={12} /> Add Experience
+                </button>
+              ) : (
+                <div className="space-y-2 mt-2 p-3 bg-gray-50 rounded-xl">
+                  <input placeholder="Company Name" value={newExp.company_name} onChange={e => setNewExp(p => ({ ...p, company_name: e.target.value }))}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500" />
+                  <input placeholder="Role / Title" value={newExp.role} onChange={e => setNewExp(p => ({ ...p, role: e.target.value }))}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500" />
+                  <div className="flex gap-2">
+                    <input placeholder="Start year" type="number" value={newExp.start_year} onChange={e => setNewExp(p => ({ ...p, start_year: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500" />
+                    <input placeholder="End year" type="number" value={newExp.end_year} onChange={e => setNewExp(p => ({ ...p, end_year: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                  <textarea placeholder="Description (optional)" value={newExp.description} onChange={e => setNewExp(p => ({ ...p, description: e.target.value }))}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500" rows={2} />
+                  <div className="flex gap-2">
+                    <button onClick={addExperience} disabled={actionLoading}
+                      className="flex-1 flex items-center justify-center gap-1 bg-amber-500 text-gray-900 py-1.5 rounded-lg text-xs font-semibold hover:bg-amber-600 transition">
+                      {actionLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus size={12} />} Add
+                    </button>
+                    <button onClick={() => setShowExpForm(false)}
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </Card>
 
+          {/* Education */}
           <Card title="Education" icon={GraduationCap}>
             <div className="space-y-3">
               {education.map(edu => (
@@ -258,13 +345,14 @@ const Alumni_Profile = () => {
             </div>
           </Card>
 
+          {/* Skills */}
           <Card title="Skills">
             <div className="flex flex-wrap gap-2 mb-3">
               {skills.map(skill => (
-                <span key={skill.id} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium group">
+                <span key={skill.id} className="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 text-xs rounded-full font-medium group">
                   {skill.skill_name}
                   <button onClick={() => deleteSkill(skill.id)}
-                    className="text-blue-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                    className="text-amber-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
                     {actionLoading === skill.id ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <X size={12} />}
                   </button>
                 </span>
@@ -274,7 +362,7 @@ const Alumni_Profile = () => {
             <div className="flex gap-2">
               <input placeholder="Add a skill..." value={newSkill} onChange={e => setNewSkill(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addSkill()}
-                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500" />
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500" />
               <button onClick={addSkill} disabled={actionLoading || !newSkill.trim()}
                 className="flex items-center gap-1 bg-amber-500 text-gray-900 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-amber-600 transition disabled:opacity-50">
                 {actionLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus size={14} />} Add
@@ -290,7 +378,7 @@ const Alumni_Profile = () => {
 const Card = ({ title, icon: Icon, children }) => (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
     <div className="flex items-center gap-2 mb-4">
-      {Icon && <Icon size={16} className="text-blue-600" />}
+      {Icon && <Icon size={16} className="text-amber-600" />}
       <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
     </div>
     {children}
@@ -317,14 +405,6 @@ const EditField = ({ label, value, onChange, textarea }) => (
       <input type="text" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
     )}
-  </div>
-)
-
-const Timeline = ({ role, company, date }) => (
-  <div className="mb-4 border-l-2 border-blue-300 pl-3">
-    <p className="text-sm font-medium text-gray-900">{role}</p>
-    <p className="text-xs text-gray-500">{company}</p>
-    <p className="text-xs text-blue-600">{date}</p>
   </div>
 )
 

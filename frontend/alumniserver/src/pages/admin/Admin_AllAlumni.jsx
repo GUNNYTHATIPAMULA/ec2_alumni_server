@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { api } from '../../services/api'
-import { Loader2, Search, Shield, ShieldOff, Users, Check, X, Mail, Phone, MapPin, Briefcase, GraduationCap, Calendar, ExternalLink } from 'lucide-react'
+import { Loader2, Search, Shield, ShieldOff, Users, Check, X, Mail, Phone, MapPin, GraduationCap, Calendar, ExternalLink } from 'lucide-react'
 
 const Admin_AllAlumni = () => {
   const [alumni, setAlumni] = useState([])
@@ -39,14 +39,14 @@ const Admin_AllAlumni = () => {
     }
   }
 
-  const handleRowClick = async (alumnus) => {
-    setSelectedAlumnus(alumnus)
+  const handleRowClick = async (userId) => {
     setDetailLoading(true)
     try {
-      const res = await api.get(`/admin/alumni/${alumnus.user_id}`)
+      const res = await api.get(`/admin/alumni/${userId}`)
       setSelectedAlumni(res.data)
     } catch (err) {
-      setSelectedAlumni(alumnus)
+      console.error('Error fetching alumni details:', err)
+      setSelectedAlumni(null)
     } finally {
       setDetailLoading(false)
     }
@@ -66,13 +66,8 @@ const Admin_AllAlumni = () => {
     )
   }
 
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
-        <Users size={20} className="text-blue-600" />
-        <h1 className="text-xl font-bold text-gray-900">All Alumni</h1>
-      </div>
-
+  const tableContent = (
+    <>
       <div className="relative mb-4">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input type="text" placeholder="Search name, email, roll number, branch..."
@@ -103,8 +98,8 @@ const Admin_AllAlumni = () => {
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((a) => (
                   <tr key={a.user_id}
-                    onClick={() => handleRowClick(a)}
-                    className="hover:bg-blue-50 cursor-pointer transition-colors">
+                    onClick={() => handleRowClick(a.user_id)}
+                    className={`hover:bg-blue-50 cursor-pointer transition-colors ${selectedAlumni?.user_id === a.user_id ? 'bg-blue-50' : ''}`}>
                     <td className="px-3 py-2 font-medium text-gray-900">{a.full_name}</td>
                     <td className="px-3 py-2 text-gray-600 hidden md:table-cell">{a.email}</td>
                     <td className="px-3 py-2 text-gray-600">{a.roll_number}</td>
@@ -139,77 +134,90 @@ const Admin_AllAlumni = () => {
       </div>
 
       <p className="text-xs text-gray-400 mt-2">{filtered.length} of {alumni.length} alumni</p>
+    </>
+  )
 
-      {selectedAlumni && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedAlumni(null)}>
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            {detailLoading ? (
-              <div className="flex items-center justify-center p-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+  const detailPanel = selectedAlumni && (
+    <div className="w-80 lg:w-96 shrink-0 border-l border-gray-200 bg-white overflow-y-auto">
+      {detailLoading ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        </div>
+      ) : (
+        <div>
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+            <h2 className="text-sm font-semibold text-gray-900">Alumni Details</h2>
+            <button onClick={() => setSelectedAlumni(null)} className="p-1 hover:bg-gray-100 rounded-full transition">
+              <X size={16} className="text-gray-400" />
+            </button>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center text-white font-bold text-lg">
+                {selectedAlumni.profile_image || selectedAlumni.full_name?.charAt(0) || 'A'}
               </div>
-            ) : (
-              <>
-                <div className="p-6 border-b border-gray-100">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center text-white font-bold text-xl">
-                        {selectedAlumni.full_name?.charAt(0) || 'A'}
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold text-gray-900">{selectedAlumni.full_name}</h2>
-                        <p className="text-sm text-gray-500">{selectedAlumni.occupation || 'Alumni'}{selectedAlumni.company_name ? ` at ${selectedAlumni.company_name}` : ''}</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setSelectedAlumni(null)} className="p-1 hover:bg-gray-100 rounded-full transition">
-                      <X size={20} className="text-gray-400" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6 space-y-4">
-                  <DetailRow icon={Mail} label="Email" value={selectedAlumni.email} />
-                  <DetailRow icon={Phone} label="Phone" value={selectedAlumni.phone_number || 'N/A'} />
-                  <DetailRow icon={GraduationCap} label="Roll Number" value={selectedAlumni.roll_number} />
-                  <DetailRow icon={BookOpen} label="Branch" value={selectedAlumni.branch} />
-                  <DetailRow icon={GraduationCap} label="Degree" value={selectedAlumni.degree} />
-                  <DetailRow icon={Calendar} label="Batch" value={`${selectedAlumni.batch_start_year} - ${selectedAlumni.batch_end_year}`} />
-                  <DetailRow icon={MapPin} label="Location" value={selectedAlumni.current_location || 'N/A'} />
-                  {selectedAlumni.linkedin_url && (
-                    <DetailRow icon={LinkedInIcon} label="LinkedIn" value={selectedAlumni.linkedin_url} isLink />
-                  )}
-                  {selectedAlumni.github_url && (
-                    <DetailRow icon={GithubIcon} label="GitHub" value={selectedAlumni.github_url} isLink />
-                  )}
-                  {selectedAlumni.bio && (
-                    <div className="pt-2 border-t border-gray-100">
-                      <p className="text-xs text-gray-400 mb-1">Bio</p>
-                      <p className="text-sm text-gray-700">{selectedAlumni.bio}</p>
-                    </div>
-                  )}
-                  <div className="flex gap-2 pt-2 border-t border-gray-100">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                      selectedAlumni.is_verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
-                    }`}>
-                      {selectedAlumni.is_verified ? <Check size={11} /> : <X size={11} />}
-                      {selectedAlumni.is_verified ? 'Verified' : 'Unverified'}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                      selectedAlumni.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                    }`}>
-                      {selectedAlumni.is_active ? <Check size={11} /> : <ShieldOff size={11} />}
-                      {selectedAlumni.is_active ? 'Active' : 'Blocked'}
-                    </span>
-                    {selectedAlumni.mentorship_available && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
-                        Mentor
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-gray-900 truncate">{selectedAlumni.full_name}</h3>
+                <p className="text-xs text-gray-500 truncate">{selectedAlumni.occupation || 'Alumni'}{selectedAlumni.company_name ? ` at ${selectedAlumni.company_name}` : ''}</p>
+              </div>
+            </div>
+            <DetailRow icon={Mail} label="Email" value={selectedAlumni.email} />
+            <DetailRow icon={Phone} label="Phone" value={selectedAlumni.phone_number || 'N/A'} />
+            <DetailRow icon={GraduationCap} label="Roll Number" value={selectedAlumni.roll_number} />
+            <DetailRow icon={BookOpen} label="Branch" value={selectedAlumni.branch} />
+            <DetailRow icon={GraduationCap} label="Degree" value={selectedAlumni.degree} />
+            <DetailRow icon={Calendar} label="Batch" value={`${selectedAlumni.batch_start_year} - ${selectedAlumni.batch_end_year}`} />
+            <DetailRow icon={MapPin} label="Location" value={selectedAlumni.current_location || 'N/A'} />
+            {selectedAlumni.linkedin_url && (
+              <DetailRow icon={LinkedInIcon} label="LinkedIn" value={selectedAlumni.linkedin_url} isLink />
             )}
+            {selectedAlumni.github_url && (
+              <DetailRow icon={GithubIcon} label="GitHub" value={selectedAlumni.github_url} isLink />
+            )}
+            {selectedAlumni.bio && (
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs text-gray-400 mb-1">Bio</p>
+                <p className="text-sm text-gray-700">{selectedAlumni.bio}</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                selectedAlumni.is_verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+              }`}>
+                {selectedAlumni.is_verified ? <Check size={11} /> : <X size={11} />}
+                {selectedAlumni.is_verified ? 'Verified' : 'Unverified'}
+              </span>
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                selectedAlumni.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>
+                {selectedAlumni.is_active ? <Check size={11} /> : <ShieldOff size={11} />}
+                {selectedAlumni.is_active ? 'Active' : 'Blocked'}
+              </span>
+              {selectedAlumni.mentorship_available && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
+                  Mentor
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-4 shrink-0">
+        <Users size={20} className="text-blue-600" />
+        <h1 className="text-xl font-bold text-gray-900">All Alumni</h1>
+      </div>
+
+      <div className="flex gap-0 flex-1 min-h-0">
+        <div className={`flex-1 min-w-0 ${selectedAlumni ? 'overflow-y-auto pr-4' : ''}`}>
+          {tableContent}
+        </div>
+        {detailPanel}
+      </div>
     </div>
   )
 }

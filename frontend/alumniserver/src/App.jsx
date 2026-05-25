@@ -16,6 +16,7 @@ import Settings from "./pages/alumni/Settings"
 import Alumni_connection from "./pages/alumni/Alumni_connection"
 import Contributions from "./pages/alumni/Contributions"
 import Notifications from "./pages/alumni/Notifications"
+import Posts from "./pages/alumni/Posts"
 import Admin_Dashboard from "./pages/admin/Admin_Dashboard"
 import Admin_AllAlumni from "./pages/admin/Admin_AllAlumni"
 import Admin_Events from "./pages/admin/Admin_Events"
@@ -42,6 +43,7 @@ function App() {
             <Route path="resources" element={<Job_Page />} />
             <Route path="contribute" element={<Contributions />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="posts" element={<Posts />} />
           </Route>
           <Route path="/admindashboard" element={<AdminLayout />}>
             <Route index element={<Admin_Dashboard />} />

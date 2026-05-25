@@ -20,10 +20,10 @@ const MentorshipHub = () => {
     }).catch(() => setLoading(false))
   }, [])
 
-  const handleRequest = async (mentorId) => {
-    setActionLoading(mentorId)
+  const handleRequest = async (mentorUserId) => {
+    setActionLoading(mentorUserId)
     try {
-      await api.post(`/mentorship/request/${mentorId}`)
+      await api.post(`/mentorship/request/${mentorUserId}`)
       alert('Mentorship request sent!')
       const res = await api.get('/mentorship/requests')
       setRequests(res.data || [])
@@ -117,14 +117,14 @@ const MentorshipHub = () => {
                       {mentor.occupation && (
                         <p className="text-center text-sm text-gray-600 mb-4">{mentor.occupation}{mentor.company_name ? ` at ${mentor.company_name}` : ''}</p>
                       )}
-                      <button onClick={() => handleRequest(mentor.id)}
-                        disabled={actionLoading === mentor.id || hasPending}
+                      <button onClick={() => handleRequest(mentor.user_id)}
+                        disabled={actionLoading === mentor.user_id || hasPending}
                         className={`w-full flex items-center justify-center gap-2 font-semibold py-3 rounded-xl transition ${
                           hasPending
                             ? 'bg-gray-100 text-gray-400 cursor-default'
                             : 'bg-amber-500 text-gray-900 hover:bg-amber-600'
                         } disabled:opacity-50`}>
-                        {actionLoading === mentor.id ? (
+                        {actionLoading === mentor.user_id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : hasPending ? (
                           <><Check size={16} /> Request Pending</>

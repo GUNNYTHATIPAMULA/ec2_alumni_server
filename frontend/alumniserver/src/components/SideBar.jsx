@@ -42,6 +42,7 @@ const SideBar = ({ user, onClose }) => {
       { icon: Award, label: 'Alumni Spotlights', href: '/alumnidashboard/spotlights' },
       { icon: Heart, label: 'Giving Back', href: '/alumnidashboard/contribute' },
       { icon: Settings, label: 'Settings', href: '/alumnidashboard/settings' },
+      { icon: FileText, label: 'Community Posts', href: '/alumnidashboard/posts' },
       { icon: Bell, label: 'Notifications', href: '/alumnidashboard/notifications' },
     ],
     student: [
