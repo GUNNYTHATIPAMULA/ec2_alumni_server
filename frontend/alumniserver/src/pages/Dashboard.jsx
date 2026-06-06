@@ -49,7 +49,7 @@ const Dashboard = () => {
               {user ? (
                 <h1 className="text-3xl font-bold ">Welcome back,</h1>
               ) : (
-                <h1 className="text-3xl font-bold text-white">Welcome to the <span className='text-amber-400'>Alumni Portal</span></h1>
+                <h1 className="text-3xl font-bold text-white">Welcome to the <span className='text-amber-400'>Alumni Website</span></h1>
               )}
               <p className="text-blue-200 mt-2">Stay connected with your alma mater and fellow alumni.</p>
             </div>
