@@ -27,7 +27,7 @@ const Register = () => {
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
+  const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

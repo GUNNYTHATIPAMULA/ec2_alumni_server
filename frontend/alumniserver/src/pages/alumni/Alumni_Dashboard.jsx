@@ -67,7 +67,7 @@ const Alumni_Dashboard = () => {
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full ring-2 ring-white/30 bg-white/20 flex items-center justify-center overflow-hidden">
                   {profile?.profile_image ? (
-                    <img src={profile.profile_image.startsWith('http') ? profile.profile_image : `http://localhost:8000${profile.profile_image}`} alt="" className="h-full w-full object-cover" />
+                    <img src={profile.profile_image.startsWith('http') ? profile.profile_image : `${import.meta.env.VITE_BASE_API_URL}${profile.profile_image}`} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-2xl font-bold text-white">
                       {profile?.full_name?.charAt(0) || user?.fullName?.charAt(0) || 'A'}
