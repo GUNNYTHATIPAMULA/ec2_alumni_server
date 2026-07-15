@@ -187,6 +187,7 @@ async def register_alumni(data: AlumniRegisterSchema, db: AsyncSession = Depends
     base_user.email_verified = True
     base_user.phone_verified = True
     if email_user.id != phone_user.id:
+        await db.delete(phone_user)
         base_user.phone_number = data.phone_number
 
     await db.flush()
@@ -198,9 +199,6 @@ async def register_alumni(data: AlumniRegisterSchema, db: AsyncSession = Depends
         profile_image=data.profile_image
     )
     db.add(profile)
-
-    if email_user.id != phone_user.id:
-        await db.delete(phone_user)
 
     await db.commit()
     return {"message": "Alumni registered successfully"}

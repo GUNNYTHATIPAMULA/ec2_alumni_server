@@ -16,10 +16,13 @@ from app.models.mentorship_model import MentorshipRequest
 from app.models.notification_model import Notification
 
 app = FastAPI(title="College Alumni Platform API", version="1.0.0")
-
+origins = [
+    "http://16.171.26.237",
+    "http://localhost:5173",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
