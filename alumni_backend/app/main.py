@@ -15,10 +15,18 @@ from app.models.connection_model import Connection
 from app.models.mentorship_model import MentorshipRequest
 from app.models.notification_model import Notification
 
+import os
+
 app = FastAPI(title="College Alumni Platform API", version="1.0.0")
 origins = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+] or [
     "http://16.171.26.237",
+    "http://16.171.26.237:5173",
     "http://localhost:5173",
+    "http://localhost:80",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -37,7 +45,6 @@ async def startup():
 
 app.include_router(router)
 
-import os
 from app.core.config import settings
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
