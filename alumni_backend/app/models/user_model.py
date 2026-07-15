@@ -18,27 +18,31 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "users"
 
-    username: Mapped[str] = mapped_column(
+    username: Mapped[str | None] = mapped_column(
         String(100),
         unique=True,
-        index=True
+        index=True,
+        nullable=True
     )
 
-    email: Mapped[str] = mapped_column(
+    email: Mapped[str | None] = mapped_column(
         String(255),
         unique=True,
-        index=True
+        index=True,
+        nullable=True
     )
 
-    phone_number: Mapped[str] = mapped_column(
+    phone_number: Mapped[str | None] = mapped_column(
         String(15),
-        unique=True
+        unique=True,
+        nullable=True
     )
 
-    hashed_password: Mapped[str] = mapped_column(String)
+    hashed_password: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole)
+    role: Mapped[UserRole | None] = mapped_column(
+        Enum(UserRole),
+        nullable=True
     )
 
     # Verification

@@ -131,10 +131,7 @@ const Dashboard = () => {
                     className="bg-blue-900 text-indigo-600 text-white px-4 py-2 rounded-sm font-medium text-sm hover:bg-blue-800 transition-colors">
                     Login
                   </button>
-                  <button onClick={() => navigate('/register')}
-                    className="border border-white bg-amber-400 text-black px-4 py-2 rounded-sm font-medium text-sm hover:bg-amber-500 hover:text-white transition-colors">
-                    Register
-                  </button>
+                 
                 </div>
               </div>
             </div>

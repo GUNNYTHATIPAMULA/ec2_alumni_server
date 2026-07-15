@@ -28,6 +28,9 @@ const SideBar = ({ user, onClose }) => {
     admin: [
       { icon: Home, label: 'Dashboard', href: '/admindashboard' },
       { icon: Users, label: 'All Alumni', href: '/admindashboard/alumni' },
+      { icon: Briefcase, label: 'Jobs', href: '/admindashboard/jobs' },
+      { icon: GraduationCap, label: 'Mentorship', href: '/admindashboard/mentorship' },
+      { icon: FileText, label: 'Posts', href: '/admindashboard/posts' },
       { icon: Calendar, label: 'Events', href: '/admindashboard/events' },
       { icon: User, label: 'Pending Approvals', href: '/admindashboard/pending' },
     ],
@@ -130,7 +133,6 @@ const SideBar = ({ user, onClose }) => {
           <button
             onClick={() => {
               logout();
-              navigate('/');
               if (onClose) onClose();
             }} className="w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
             <LogOut size={18} />

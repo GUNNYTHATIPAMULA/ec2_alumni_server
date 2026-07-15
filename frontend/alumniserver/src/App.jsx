@@ -21,17 +21,35 @@ import Admin_Dashboard from "./pages/admin/Admin_Dashboard"
 import Admin_AllAlumni from "./pages/admin/Admin_AllAlumni"
 import Admin_Events from "./pages/admin/Admin_Events"
 import Admin_PendingAlumni from "./pages/admin/Admin_PendingAlumni"
+import Admin_Jobs from "./pages/admin/Admin_Jobs"
+import Admin_Mentorship from "./pages/admin/Admin_Mentorship"
+import Admin_Posts from "./pages/admin/Admin_Posts"
 import Student_Dashboard from "./pages/student/Student_Dashboard"
 import Student_Events from "./pages/student/Student_Events"
 import Student_Profile from "./pages/student/Student_Profile"
 import { AuthProvider } from "./context/AuthContext"
-
+import Alumni_List from "./components/Alumni_List"
+import ProtectedRoutes from "./components/ProtectedRoutes"
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/alumnidashboard" element={<AlumniLayout />}>
+          {/* PUBLIC ROUTES */}
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="register" element={<Register />} />
+            <Route path="login" element={<Loginpage />} />
+          </Route>
+          {/* PROTECTED ALUMNI */}
+          <Route
+            path="/alumnidashboard/*"
+            element={
+              <ProtectedRoutes>
+                <AlumniLayout />
+              </ProtectedRoutes>
+            }
+          >
             <Route index element={<Alumni_Dashboard />} />
             <Route path="alumnidirectory" element={<All_Alumni />} />
             <Route path="profile" element={<Alumni_Profile />} />
@@ -43,28 +61,41 @@ function App() {
             <Route path="resources" element={<Job_Page />} />
             <Route path="contribute" element={<Contributions />} />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="posts" element={<Posts />} />
+            <Route path="posts" element={<Alumni_List />} />
           </Route>
-          <Route path="/admindashboard" element={<AdminLayout />}>
+          {/* PROTECTED ADMIN */}
+          <Route
+            path="/admindashboard/*"
+            element={
+              <ProtectedRoutes>
+                <AdminLayout />
+              </ProtectedRoutes>
+            }
+          >
             <Route index element={<Admin_Dashboard />} />
             <Route path="alumni" element={<Admin_AllAlumni />} />
+            <Route path="jobs" element={<Admin_Jobs />} />
+            <Route path="mentorship" element={<Admin_Mentorship />} />
+            <Route path="posts" element={<Admin_Posts />} />
             <Route path="events" element={<Admin_Events />} />
             <Route path="pending" element={<Admin_PendingAlumni />} />
           </Route>
-          <Route path="/studentdashboard" element={<StudentLayout />}>
+          {/* PROTECTED STUDENT */}
+          <Route
+            path="/studentdashboard/*"
+            element={
+              <ProtectedRoutes>
+                <StudentLayout />
+              </ProtectedRoutes>
+            }
+          >
             <Route index element={<Student_Dashboard />} />
             <Route path="events" element={<Student_Events />} />
             <Route path="profile" element={<Student_Profile />} />
           </Route>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Loginpage />} />
-          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>
-  )
+  );
 }
-
 export default App

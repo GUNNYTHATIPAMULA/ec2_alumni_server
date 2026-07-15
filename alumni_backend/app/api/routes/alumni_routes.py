@@ -8,6 +8,7 @@ from app.core.roles import UserRole
 from app.schemas.alumni_schema import AlumniProfileResponse, AlumniProfileUpdate, AlumniListResponse
 from app.models.user_model import User
 from app.models.alumni_model import AlumniProfile
+from app.models.alumni_experience_model import AlumniExperience
 
 router = APIRouter(prefix="/alumni", tags=["Alumni"])
 
@@ -37,11 +38,20 @@ async def update_profile(data: AlumniProfileUpdate, current_user: User = Depends
         raise HTTPException(status_code=403, detail="Alumni access required")
     result = await db.execute(select(AlumniProfile).where(AlumniProfile.user_id == current_user.id))
     profile = result.scalar_one_or_none()
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
+
     update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(profile, field, value)
+
+    if not profile:
+        required = ["full_name", "roll_number", "branch", "degree", "batch_start_year", "batch_end_year"]
+        missing = [f for f in required if f not in update_data]
+        if missing:
+            raise HTTPException(status_code=400, detail=f"Missing required fields for profile creation: {', '.join(missing)}")
+        profile = AlumniProfile(user_id=current_user.id, **update_data)
+        db.add(profile)
+    else:
+        for field, value in update_data.items():
+            setattr(profile, field, value)
+
     await db.commit()
     await db.refresh(profile)
     return AlumniProfileResponse(
@@ -61,11 +71,24 @@ async def get_alumni_directory(db: AsyncSession = Depends(get_db)):
         select(AlumniProfile).order_by(AlumniProfile.full_name)
     )
     profiles = result.scalars().all()
+
+    alumni_ids = [str(p.id) for p in profiles]
+    if alumni_ids:
+        exp_result = await db.execute(
+            select(AlumniExperience.alumni_id).where(
+                AlumniExperience.alumni_id.in_(alumni_ids)
+            ).distinct()
+        )
+        alumni_with_experience = {str(row[0]) for row in exp_result.fetchall()}
+    else:
+        alumni_with_experience = set()
+
     return [
         AlumniListResponse(
             id=str(p.id), user_id=str(p.user_id), full_name=p.full_name, roll_number=p.roll_number,
             branch=p.branch, batch_start_year=p.batch_start_year, batch_end_year=p.batch_end_year,
-            occupation=p.occupation, company_name=p.company_name, profile_image=p.profile_image
+            occupation=p.occupation, company_name=p.company_name, profile_image=p.profile_image,
+            has_experience=str(p.id) in alumni_with_experience
         )
         for p in profiles
     ]
@@ -77,8 +100,15 @@ async def get_alumni_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
     profile = result.scalar_one_or_none()
     if not profile:
         raise HTTPException(status_code=404, detail="Alumni not found")
+
+    exp_result = await db.execute(
+        select(AlumniExperience).where(AlumniExperience.alumni_id == profile.id).limit(1)
+    )
+    has_experience = exp_result.scalar_one_or_none() is not None
+
     return AlumniListResponse(
         id=str(profile.id), user_id=str(profile.user_id), full_name=profile.full_name, roll_number=profile.roll_number,
         branch=profile.branch, batch_start_year=profile.batch_start_year, batch_end_year=profile.batch_end_year,
-        occupation=profile.occupation, company_name=profile.company_name, profile_image=profile.profile_image
+        occupation=profile.occupation, company_name=profile.company_name, profile_image=profile.profile_image,
+        has_experience=has_experience
     )

@@ -1,14 +1,27 @@
+import re
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.alumni_experience_model import AlumniExperience
 from app.models.alumni_model import AlumniProfile
 
 
+UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+
 async def get_alumni_profile_id(user_id: str, db: AsyncSession) -> str:
-    result = await db.execute(
-        select(AlumniProfile).where(AlumniProfile.user_id == user_id)
-    )
-    profile = result.scalar_one_or_none()
+    if not UUID_PATTERN.match(str(user_id)):
+        raise Exception("Alumni profile not found")
+    try:
+        result = await db.execute(
+            select(AlumniProfile).where(AlumniProfile.user_id == user_id)
+        )
+        profile = result.scalar_one_or_none()
+    except DBAPIError:
+        raise Exception("Alumni profile not found")
     if not profile:
         raise Exception("Alumni profile not found")
     return str(profile.id)
@@ -49,6 +62,31 @@ async def list_experience_service(
     db: AsyncSession
 ):
     alumni_id = await get_alumni_profile_id(user_id, db)
+    result = await db.execute(
+        select(AlumniExperience)
+        .where(AlumniExperience.alumni_id == alumni_id)
+        .order_by(AlumniExperience.start_year.desc())
+    )
+    experiences = result.scalars().all()
+    return [
+        {
+            "id": str(exp.id),
+            "alumni_id": str(exp.alumni_id),
+            "company_name": exp.company_name,
+            "role": exp.role,
+            "start_year": exp.start_year,
+            "end_year": exp.end_year,
+            "description": exp.description,
+        }
+        for exp in experiences
+    ]
+
+
+async def list_experience_by_user_id_service(
+    target_user_id: str,
+    db: AsyncSession
+):
+    alumni_id = await get_alumni_profile_id(target_user_id, db)
     result = await db.execute(
         select(AlumniExperience)
         .where(AlumniExperience.alumni_id == alumni_id)

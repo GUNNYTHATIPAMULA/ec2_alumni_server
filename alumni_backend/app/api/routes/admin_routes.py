@@ -5,13 +5,20 @@ from typing import List
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
 from app.core.roles import UserRole
-from app.schemas.admin_schema import AdminProfileResponse, AdminProfileUpdate, PendingUserResponse, DashboardStats, AlumniAdminResponse, AlumniDetailResponse
+from app.schemas.admin_schema import (
+    AdminProfileResponse, AdminProfileUpdate, PendingUserResponse,
+    DashboardStats, AlumniAdminResponse, AlumniDetailResponse,
+    AdminJobResponse, AdminMentorshipResponse, AdminPostResponse
+)
+from app.schemas.job_schema import CreateJobSchema
 from app.models.user_model import User
 from app.models.admin_model import AdminProfile
 from app.models.alumni_model import AlumniProfile
 from app.models.student_model import StudentProfile
 from app.models.event_model import Event
 from app.models.post_model import Post
+from app.models.job_model import Job
+from app.models.mentorship_model import MentorshipRequest
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -60,11 +67,14 @@ async def get_admin_dashboard(current_user: User = Depends(get_current_user), db
     admin_count = (await db.execute(select(func.count(AdminProfile.id)))).scalar()
     event_count = (await db.execute(select(func.count(Event.id)))).scalar()
     post_count = (await db.execute(select(func.count(Post.id)))).scalar()
+    job_count = (await db.execute(select(func.count(Job.id)))).scalar()
+    mentorship_count = (await db.execute(select(func.count(MentorshipRequest.id)))).scalar()
     pending = (await db.execute(select(func.count(User.id)).where(User.is_verified == False))).scalar()
     return DashboardStats(
         total_alumni=alumni_count or 0, total_students=student_count or 0,
         total_admins=admin_count or 0, total_events=event_count or 0,
-        total_posts=post_count or 0, pending_approvals=pending or 0
+        total_posts=post_count or 0, total_jobs=job_count or 0,
+        total_mentorship_requests=mentorship_count or 0, pending_approvals=pending or 0
     )
 
 
@@ -159,3 +169,128 @@ async def toggle_block_user(user_id: str, current_user: User = Depends(get_curre
     user.is_active = not user.is_active
     await db.commit()
     return {"is_active": user.is_active, "message": f"User {'unblocked' if user.is_active else 'blocked'} successfully"}
+
+
+@router.get("/jobs", response_model=List[AdminJobResponse])
+async def admin_list_jobs(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    result = await db.execute(
+        select(Job, User).join(User, Job.posted_by_id == User.id).order_by(Job.created_at.desc())
+    )
+    rows = result.all()
+    return [
+        AdminJobResponse(
+            id=str(j.id), title=j.title, company=j.company, location=j.location,
+            description=j.description, requirements=j.requirements,
+            employment_type=j.employment_type, experience_level=j.experience_level,
+            salary_range=j.salary_range, application_deadline=j.application_deadline,
+            contact_email=j.contact_email, is_active=j.is_active,
+            posted_by_id=str(j.posted_by_id), posted_by_name=u.username,
+            created_at=j.created_at
+        )
+        for j, u in rows
+    ]
+
+
+@router.post("/jobs", response_model=AdminJobResponse)
+async def admin_create_job(data: CreateJobSchema, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    job = Job(**data.model_dump(), posted_by_id=current_user.id)
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
+    return AdminJobResponse(
+        id=str(job.id), title=job.title, company=job.company, location=job.location,
+        description=job.description, requirements=job.requirements,
+        employment_type=job.employment_type, experience_level=job.experience_level,
+        salary_range=job.salary_range, application_deadline=job.application_deadline,
+        contact_email=job.contact_email, is_active=job.is_active,
+        posted_by_id=str(job.posted_by_id), posted_by_name=current_user.username,
+        created_at=job.created_at
+    )
+
+
+@router.delete("/jobs/{job_id}")
+async def admin_delete_job(job_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    result = await db.execute(select(Job).where(Job.id == job_id))
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    await db.delete(job)
+    await db.commit()
+    return {"message": "Job deleted successfully"}
+
+
+@router.get("/mentorship", response_model=List[AdminMentorshipResponse])
+async def admin_list_mentorship(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    result = await db.execute(
+        select(MentorshipRequest).order_by(MentorshipRequest.created_at.desc())
+    )
+    requests = result.scalars().all()
+    result_data = []
+    for r in requests:
+        mentor = await db.execute(select(User).where(User.id == r.mentor_id))
+        mentor_user = mentor.scalar_one_or_none()
+        mentee = await db.execute(select(User).where(User.id == r.mentee_id))
+        mentee_user = mentee.scalar_one_or_none()
+        result_data.append(AdminMentorshipResponse(
+            id=str(r.id), mentor_id=str(r.mentor_id),
+            mentor_name=mentor_user.username if mentor_user else None,
+            mentee_id=str(r.mentee_id),
+            mentee_name=mentee_user.username if mentee_user else None,
+            message=r.message, status=r.status, created_at=r.created_at
+        ))
+    return result_data
+
+
+@router.put("/mentorship/{request_id}")
+async def admin_update_mentorship(request_id: str, status: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if status not in ["accepted", "rejected"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    result = await db.execute(select(MentorshipRequest).where(MentorshipRequest.id == request_id))
+    req = result.scalar_one_or_none()
+    if not req:
+        raise HTTPException(status_code=404, detail="Mentorship request not found")
+    req.status = status
+    await db.commit()
+    return {"message": f"Mentorship request {status}"}
+
+
+@router.get("/posts", response_model=List[AdminPostResponse])
+async def admin_list_posts(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    result = await db.execute(
+        select(Post, User).join(User, Post.author_id == User.id).order_by(Post.created_at.desc())
+    )
+    rows = result.all()
+    return [
+        AdminPostResponse(
+            id=str(p.id), title=p.title, content=p.content,
+            author_id=str(p.author_id), author_name=u.username,
+            is_published=p.is_published, tags=p.tags, image_url=p.image_url,
+            like_count=p.like_count, created_at=p.created_at
+        )
+        for p, u in rows
+    ]
+
+
+@router.delete("/posts/{post_id}")
+async def admin_delete_post(post_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    await db.delete(post)
+    await db.commit()
+    return {"message": "Post deleted successfully"}

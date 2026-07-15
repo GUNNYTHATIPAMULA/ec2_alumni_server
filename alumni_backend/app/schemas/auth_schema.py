@@ -24,6 +24,7 @@ class AlumniRegisterSchema(BaseModel):
     batch_end_year: int
     occupation: str | None = None
     company_name: str | None = None
+    profile_image: str | None = None
 
 
 class StudentRegisterSchema(BaseModel):
@@ -60,3 +61,21 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     is_verified: bool
+
+
+class SendEmailOtpSchema(BaseModel):
+    email: EmailStr
+
+
+class VerifyEmailOtpSchema(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class SendPhoneOtpSchema(BaseModel):
+    phone_number: str
+
+
+class VerifyPhoneOtpSchema(BaseModel):
+    phone_number: str
+    otp: str

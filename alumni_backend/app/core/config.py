@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     MAIL_PORT: int
     MAIL_SERVER: str
     UPLOAD_DIR: str = "uploads"
+    BASE_URL: str = "http://localhost:8000"
 
     class Config:
         env_file = str(Path(__file__).resolve().parent.parent.parent / ".env")

@@ -15,12 +15,14 @@ from app.api.routes.event_image_routes import router as event_image_routes
 from app.api.routes.notification_routes import router as notification_router
 from app.api.routes.skill_routes import router as skill_routes
 from app.api.routes.experience_routes import router as experience_routes
+from app.api.routes.upload_routes import router as upload_router
 
 router = APIRouter()
 
 router.include_router(auth_router)
 router.include_router(education_routes)
 router.include_router(skill_routes)
+router.include_router(experience_routes)
 router.include_router(alumni_router)
 router.include_router(admin_router)
 router.include_router(student_router)
@@ -32,4 +34,4 @@ router.include_router(contribution_router)
 router.include_router(job_routes)
 router.include_router(event_image_routes)
 router.include_router(notification_router)
-router.include_router(experience_routes)
+router.include_router(upload_router)

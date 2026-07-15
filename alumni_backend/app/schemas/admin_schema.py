@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 
 class AdminProfileResponse(BaseModel):
@@ -37,6 +38,8 @@ class DashboardStats(BaseModel):
     total_admins: int
     total_events: int
     total_posts: int
+    total_jobs: int = 0
+    total_mentorship_requests: int = 0
     pending_approvals: int
 
 
@@ -79,3 +82,45 @@ class AlumniDetailResponse(BaseModel):
     is_verified: bool
     is_active: bool
     created_at: datetime | None = None
+
+
+class AdminJobResponse(BaseModel):
+    id: str
+    title: str
+    company: str
+    location: str
+    description: str
+    requirements: Optional[str] = None
+    employment_type: str
+    experience_level: Optional[str] = None
+    salary_range: Optional[str] = None
+    application_deadline: Optional[str] = None
+    contact_email: Optional[str] = None
+    is_active: bool
+    posted_by_id: str
+    posted_by_name: Optional[str] = None
+    created_at: datetime
+
+
+class AdminMentorshipResponse(BaseModel):
+    id: str
+    mentor_id: str
+    mentor_name: Optional[str] = None
+    mentee_id: str
+    mentee_name: Optional[str] = None
+    message: Optional[str] = None
+    status: str
+    created_at: datetime
+
+
+class AdminPostResponse(BaseModel):
+    id: str
+    title: str
+    content: str
+    author_id: str
+    author_name: Optional[str] = None
+    is_published: bool
+    tags: Optional[str] = None
+    image_url: Optional[str] = None
+    like_count: int
+    created_at: datetime

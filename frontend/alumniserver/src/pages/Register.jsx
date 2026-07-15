@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const OTP = '123456';
-
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -23,6 +21,11 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phoneOtpLoading, setPhoneOtpLoading] = useState(false);
+  const [emailOtpLoading, setEmailOtpLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
 
@@ -38,30 +41,82 @@ const Register = () => {
     }
   };
 
-  const handleSendOtp = () => {
+  const handleImageSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await axios.post(`${API_BASE_URL}/upload/profile-image`, form);
+      setProfileImageUrl(res.data.url);
+      setProfileImage(file);
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert('Failed to upload image');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
     if (!formData.phoneNumber) { alert('Please enter phone number first'); return; }
     if (!formData.phoneNumber.match(/^[0-9]{10}$/)) { alert('Please enter a valid 10-digit phone number'); return; }
-    setIsOtpSent(true);
-    alert(`OTP sent to ${formData.phoneNumber}`);
+    setPhoneOtpLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/auth/send-phone-otp`, { phone_number: formData.phoneNumber });
+      setIsOtpSent(true);
+      alert('OTP sent to phone. Use 123456 as OTP.');
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to send OTP');
+    } finally {
+      setPhoneOtpLoading(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    if (formData.otp !== OTP) { alert('Invalid OTP'); return; }
-    setIsPhoneVerified(true);
-    alert('Phone verified successfully!');
+  const handleVerifyOtp = async () => {
+    setPhoneOtpLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/auth/verify-phone-otp`, {
+        phone_number: formData.phoneNumber, otp: formData.otp
+      });
+      setIsPhoneVerified(true);
+      alert('Phone verified successfully!');
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Invalid OTP');
+    } finally {
+      setPhoneOtpLoading(false);
+    }
   };
 
-  const handleSendEmailOtp = () => {
+  const handleSendEmailOtp = async () => {
     if (!formData.email) { alert('Please enter email address first'); return; }
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { alert('Please enter a valid email address'); return; }
-    setIsEmailOtpSent(true);
-    alert(`Your Email OTP is: ${OTP}`);
+    setEmailOtpLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/auth/send-email-otp`, { email: formData.email });
+      setIsEmailOtpSent(true);
+      alert('OTP sent to your email. Please check your inbox.');
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to send OTP');
+    } finally {
+      setEmailOtpLoading(false);
+    }
   };
 
-  const handleVerifyEmailOtp = () => {
-    if (formData.emailOtp !== OTP) { alert('Invalid OTP'); return; }
-    setIsEmailVerified(true);
-    alert('Email verified successfully!');
+  const handleVerifyEmailOtp = async () => {
+    setEmailOtpLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/auth/verify-email-otp`, {
+        email: formData.email, otp: formData.emailOtp
+      });
+      setIsEmailVerified(true);
+      alert('Email verified successfully!');
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Invalid OTP');
+    } finally {
+      setEmailOtpLoading(false);
+    }
   };
 
   const handleEditPhone = () => {
@@ -101,7 +156,8 @@ const Register = () => {
         batch_start_year: parseInt(formData.batchStartingYear),
         batch_end_year: parseInt(formData.batchEndingYear),
         occupation: formData.occupation || null,
-        company_name: formData.company || null
+        company_name: formData.company || null,
+        profile_image: profileImageUrl || null
       };
 
       await axios.post(`${API_BASE_URL}/auth/register-alumni`, registerData);
@@ -143,6 +199,19 @@ const Register = () => {
                   <input type="text" name="rollNumber" value={formData.rollNumber} onChange={handleChange}
                     placeholder="Enter your roll number"
                     className="mb-5 px-4 py-2 border border-gray-300 placeholder:text-black rounded-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" required />
+                </div>
+                <div className="mb-5">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Profile Image</label>
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer px-4 py-2 bg-gray-100 border border-gray-300 rounded-sm text-sm text-gray-700 hover:bg-gray-200 transition">
+                      Choose Image
+                      <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                    </label>
+                    {imageUploading && <span className="text-sm text-gray-500">Uploading...</span>}
+                    {profileImageUrl && (
+                      <img src={`${API_BASE_URL}${profileImageUrl}`} alt="Preview" className="w-12 h-12 rounded-full object-cover border" />
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -189,10 +258,10 @@ const Register = () => {
                       required disabled={isPhoneVerified} />
                     {!isPhoneVerified ? (
                       <button type="button" onClick={isOtpSent ? handleVerifyOtp : handleSendOtp}
-                        disabled={isOtpSent || !formData.phoneNumber || formData.phoneNumber.length !== 10 || loading}
-                        className={`px-3 py-2 rounded-sm font-medium whitespace-nowrap ${isOtpSent || !formData.phoneNumber || formData.phoneNumber.length !== 10 || loading
+                        disabled={isOtpSent ? phoneOtpLoading : (!formData.phoneNumber || formData.phoneNumber.length !== 10 || phoneOtpLoading)}
+                        className={`px-3 py-2 rounded-sm font-medium whitespace-nowrap ${isOtpSent || !formData.phoneNumber || formData.phoneNumber.length !== 10 || phoneOtpLoading
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'}`}>
-                        {isOtpSent ? 'Verify OTP' : 'Send OTP'}
+                        {phoneOtpLoading ? 'Sending...' : (isOtpSent ? 'Verify OTP' : 'Send OTP')}
                       </button>
                     ) : (
                       <div className="px-3 py-2 bg-green-100 text-green-700 rounded-sm font-medium">✓ Verified</div>
@@ -200,7 +269,7 @@ const Register = () => {
                   </div>
                   {isOtpSent && !isPhoneVerified && (
                     <div className="mt-2 flex items-center gap-2">
-                      <input type="text" name="otp" value={formData.otp} onChange={handleChange} placeholder="Enter OTP" maxLength="6"
+                      <input type="text" name="otp" value={formData.otp} onChange={handleChange} placeholder="Enter OTP (123456)" maxLength="6"
                         className="flex-1 px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-green-500 outline-none font-mono text-center tracking-wider" />
                       <button type="button" onClick={handleEditPhone} className="text-sm text-gray-500 hover:underline">Edit</button>
                     </div>
@@ -214,10 +283,10 @@ const Register = () => {
                       required disabled={isEmailVerified} />
                     {!isEmailVerified ? (
                       <button type="button" onClick={isEmailOtpSent ? handleVerifyEmailOtp : handleSendEmailOtp}
-                        disabled={isEmailOtpSent || !formData.email || loading}
-                        className={`px-3 py-2 rounded-sm font-medium whitespace-nowrap ${isEmailOtpSent || !formData.email || loading
+                        disabled={isEmailOtpSent ? emailOtpLoading : (!formData.email || emailOtpLoading)}
+                        className={`px-3 py-2 rounded-sm font-medium whitespace-nowrap ${isEmailOtpSent || !formData.email || emailOtpLoading
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'}`}>
-                        {isEmailOtpSent ? 'Verify OTP' : 'Send OTP'}
+                        {emailOtpLoading ? 'Sending...' : (isEmailOtpSent ? 'Verify OTP' : 'Send OTP')}
                       </button>
                     ) : (
                       <div className="px-3 py-2 bg-green-100 text-green-700 rounded-sm font-medium">✓ Verified</div>

@@ -22,6 +22,11 @@ class AlumniProfileResponse(BaseModel):
 
 class AlumniProfileUpdate(BaseModel):
     full_name: str | None = None
+    roll_number: str | None = None
+    branch: str | None = None
+    degree: str | None = None
+    batch_start_year: int | None = None
+    batch_end_year: int | None = None
     occupation: str | None = None
     company_name: str | None = None
     current_location: str | None = None
@@ -43,3 +48,4 @@ class AlumniListResponse(BaseModel):
     occupation: str | None = None
     company_name: str | None = None
     profile_image: str | None = None
+    has_experience: bool = False

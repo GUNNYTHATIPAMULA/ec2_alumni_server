@@ -6,6 +6,7 @@ from app.schemas.experience_schema import AddExperienceSchema, ExperienceRespons
 from app.services.experience_service import (
     add_experience_service,
     list_experience_service,
+    list_experience_by_user_id_service,
     delete_experience_service,
 )
 from app.core.security import get_current_user
@@ -36,6 +37,17 @@ async def list_experience(
         return await list_experience_service(current_user.id, db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/{user_id}/experience", response_model=list[ExperienceResponseSchema])
+async def get_alumni_experience(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await list_experience_by_user_id_service(user_id, db)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.delete("/experience/{exp_id}")
