@@ -24,7 +24,8 @@ origins = [
     if origin.strip()
 ] or [
     "http://localhost:5173",
-    "http://16.170.33.58"
+    "http://16.170.33.58",
+    "http://16.170.33.58:5173",
 ]
 app.add_middleware(
     CORSMiddleware,
