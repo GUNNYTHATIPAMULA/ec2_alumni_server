@@ -64,7 +64,7 @@ const Register = () => {
     if (!formData.phoneNumber.match(/^[0-9]{10}$/)) { alert('Please enter a valid 10-digit phone number'); return; }
     setPhoneOtpLoading(true);
     try {
-      await axios.post(`${API_BASE_URL}/auth/send-phone-otp`, { phone_number: formData.phoneNumber });
+      await axios.post(`${API_BASE_URL}/auth/send-phone-otp`, { phone_number: formData.phoneNumber, email: formData.email || undefined });
       setIsOtpSent(true);
       alert('OTP sent to phone. Use 123456 as OTP.');
     } catch (err) {
@@ -94,7 +94,7 @@ const Register = () => {
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { alert('Please enter a valid email address'); return; }
     setEmailOtpLoading(true);
     try {
-      await axios.post(`${API_BASE_URL}/auth/send-email-otp`, { email: formData.email });
+      await axios.post(`${API_BASE_URL}/auth/send-email-otp`, { email: formData.email, phone_number: formData.phoneNumber || undefined });
       setIsEmailOtpSent(true);
       alert('OTP sent to your email. Please check your inbox.');
     } catch (err) {

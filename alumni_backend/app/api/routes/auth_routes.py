@@ -29,6 +29,16 @@ async def send_email_otp_endpoint(data: SendEmailOtpSchema, db: AsyncSession = D
     if user and user.is_verified:
         raise HTTPException(status_code=400, detail="Email already registered")
     otp = generate_otp()
+    if not user and data.phone_number:
+        phone_existing = await db.execute(select(User).where(User.phone_number == data.phone_number))
+        phone_user = phone_existing.scalar_one_or_none()
+        if phone_user and not phone_user.is_verified:
+            phone_user.email = data.email
+            phone_user.email_otp = otp
+            phone_user.otp_expiry = datetime.utcnow() + timedelta(minutes=5)
+            await db.commit()
+            await send_email_otp(data.email, otp)
+            return {"message": "OTP sent to email"}
     if not user:
         user = User(email=data.email, email_otp=otp, otp_expiry=datetime.utcnow() + timedelta(minutes=5))
         db.add(user)
@@ -63,6 +73,15 @@ async def send_phone_otp_endpoint(data: SendPhoneOtpSchema, db: AsyncSession = D
     if user and user.is_verified:
         raise HTTPException(status_code=400, detail="Phone already registered")
     otp = "123456"
+    if not user and data.email:
+        email_existing = await db.execute(select(User).where(User.email == data.email))
+        email_user = email_existing.scalar_one_or_none()
+        if email_user and not email_user.is_verified:
+            email_user.phone_number = data.phone_number
+            email_user.phone_otp = otp
+            email_user.otp_expiry = datetime.utcnow() + timedelta(minutes=5)
+            await db.commit()
+            return {"message": "OTP sent to phone"}
     if not user:
         user = User(phone_number=data.phone_number, phone_otp=otp, otp_expiry=datetime.utcnow() + timedelta(minutes=5))
         db.add(user)

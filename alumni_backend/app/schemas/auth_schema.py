@@ -65,6 +65,7 @@ class UserResponse(BaseModel):
 
 class SendEmailOtpSchema(BaseModel):
     email: EmailStr
+    phone_number: str | None = None
 
 
 class VerifyEmailOtpSchema(BaseModel):
@@ -74,6 +75,7 @@ class VerifyEmailOtpSchema(BaseModel):
 
 class SendPhoneOtpSchema(BaseModel):
     phone_number: str
+    email: str | None = None
 
 
 class VerifyPhoneOtpSchema(BaseModel):
