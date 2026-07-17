@@ -207,6 +207,7 @@ async def register_alumni(data: AlumniRegisterSchema, db: AsyncSession = Depends
     base_user.phone_verified = True
     if email_user.id != phone_user.id:
         await db.delete(phone_user)
+        await db.flush()
         base_user.phone_number = data.phone_number
 
     await db.flush()
